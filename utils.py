@@ -5,6 +5,12 @@ from pprint import pprint
 import re
 from glob import glob
 
+
+# A4
+# Top	37mm
+# Bottom	19mm
+# Left	20mm
+# Right	20mm
 def check_margins_A4(section):
     return all([
         int(section.top_margin.mm) == 37,
@@ -13,6 +19,12 @@ def check_margins_A4(section):
         int(section.right_margin.mm) == 20,
     ])
 
+
+# US Letter
+# Top	0.75in
+# Bottom	0.75in
+# Left	0.79in
+# Right	1.02in
 def check_margins_letter(section):
     return all([
         round(section.top_margin.inches, 2) == 0.75,
@@ -21,6 +33,7 @@ def check_margins_letter(section):
         round(section.right_margin.inches, 2) == 1.02,
     ])
 
+
 def check_margins(section):
     page_size = get_page_size(section)
     if page_size == 'A4':
@@ -28,9 +41,14 @@ def check_margins(section):
     elif page_size == 'Letter':
         return check_margins_letter(section)
 
+
+# Are Standard JACoW Style’s embedded in the document? Insert if missing
+# Has it used the latest JACoW Template?
 def check_jacow_styles(doc):
     return any([s.name.startswith('JACoW') for s in doc.styles])
 
+
+# Documents MUST be based on A4 or US Letter
 def get_page_size(section):
     width = round(section.page_width, -4)
     if width == round(Mm(210), -4):
@@ -39,6 +57,7 @@ def get_page_size(section):
         return 'Letter'
     else:
         raise Exception('Unknown Page Size')
+
 
 RE_REFS = re.compile(r'\[([\d,-]+)\]')
 RE_FIG_TITLES = re.compile(r'(^Figure \d+:)')

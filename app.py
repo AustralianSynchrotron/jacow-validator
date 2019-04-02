@@ -26,13 +26,14 @@ def hello():
 def upload():
     if request.method == "POST" and documents.name in request.files:
         filename = documents.save(request.files[documents.name])
-        fullpath = documents.path(filename)
+        full_path = documents.path(filename)
         try:
-            doc = Document(fullpath)
+            doc = Document(full_path)
             report = []
             references = []
             figures_refs = []
             figures_titles = []
+            summary = []
 
             report.append((check_jacow_styles(doc), "JACoW Styles"))
             report.append((True, f"Found {len(doc.sections)} sections"))
@@ -41,23 +42,34 @@ def upload():
                 report.append((True, f"Section {i} page size {get_page_size(section)}"))
                 report.append((check_margins(section), f"Section {i} margins"))
 
+            paragraph_count = 0
             for i, p in enumerate(doc.paragraphs):
-                if i == 0:
+                # ignore paragraphs with no text
+                if p.text == '':
+                    continue
+
+                if paragraph_count == 0:
                     # title
                     report.append(
-                        (p.style.name == "JACoW_Paper Title", "Paper Title Style")
+                        (
+                            p.style.name == "JACoW_Paper Title",
+                            f"{p.style.name} - should be JACoW_Paper Title"
+                        )
                     )
-                if i == 1:
+                elif paragraph_count == 1:
                     # author list
                     report.append(
-                        (p.style.name == "JACoW_Author List", "Author List Style")
+                        (
+                            p.style.name == "JACoW_Author List",
+                            f"{p.style.name} - should be JACoW_Author List"
+                        )
                     )
-                if i == 2:
+                elif paragraph_count == 2:
                     # abstract heading
                     report.append(
                         (
                             p.style.name == "JACoW_Abstract_Heading",
-                            "Abstract Heading Style",
+                            f"{p.style.name} - should be JACoW_Abstract_Heading",
                         )
                     )
 
@@ -71,6 +83,8 @@ def upload():
                 for f in RE_FIG_TITLES.findall(p.text):
                     figures_titles.append(f)
 
+                paragraph_count = paragraph_count+1
+
             return render_template(
                 "upload.html",
                 report=report,
@@ -80,6 +94,6 @@ def upload():
                 figures_titles=figures_titles,
             )
         finally:
-            os.remove(fullpath)
+            os.remove(full_path)
 
     return render_template("upload.html")
